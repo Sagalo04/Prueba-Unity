@@ -3,7 +3,6 @@ using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
-    bool canJump = true;
     public static float xin;
     public static float yin;
 

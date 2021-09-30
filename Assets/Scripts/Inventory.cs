@@ -32,6 +32,11 @@ public class Inventory : MonoBehaviour
                 {
                     Bag[i].GetComponent<Image>().enabled = true;
                     Bag[i].GetComponent<Image>().sprite = collision.GetComponent<SpriteRenderer>().sprite;
+                    Bag[i].GetComponent<Item>().Type = collision.GetComponent<Item>().Type;
+                    Bag[i].GetComponent<Item>().Atack = collision.GetComponent<Item>().Atack;
+                    Bag[i].GetComponent<Item>().Defense = collision.GetComponent<Item>().Defense;
+                    Bag[i].GetComponent<Item>().Lucky = collision.GetComponent<Item>().Lucky;
+
                     break;
                 }
             }
@@ -109,7 +114,20 @@ public class Inventory : MonoBehaviour
 
                         if (Input.GetKeyDown(KeyCode.F))
                         {
-                            if (Equipo[ID_equipo].GetComponent<Image>().enabled == false)
+                            switch (Bag[ID].GetComponent<Item>().Type)
+                            {
+                                case "Extra":
+                                    Almacenar(4);
+                                    break;
+                                case "Sword":
+                                    Almacenar(0);
+                                    break;
+                                case "Armor":
+                                    Almacenar(2);
+                                    break;
+
+                            }
+                            /*if (Equipo[ID_equipo].GetComponent<Image>().enabled == false)
                             {
                                 Equipo[ID_equipo].GetComponent<Image>().sprite = Bag[ID].GetComponent<Image>().sprite;
                                 Equipo[ID_equipo].GetComponent<Image>().enabled = true;
@@ -122,7 +140,7 @@ public class Inventory : MonoBehaviour
                                 Debug.Log(Bag[ID].GetComponent<Image>().sprite.name);
                                 Bag[ID].GetComponent<Image>().sprite = Equipo[ID_equipo].GetComponent<Image>().sprite;
                                 Equipo[ID_equipo].GetComponent<Image>().sprite = obj;
-                            }
+                            }*/
                             Fases_inv = 0;
                         }
                         break;
@@ -136,6 +154,7 @@ public class Inventory : MonoBehaviour
                         {
                             Bag[ID].GetComponent<Image>().sprite = null;
                             Bag[ID].GetComponent<Image>().enabled = false;
+
                             Fases_inv = 1;
                         }
                         break;
@@ -156,13 +175,29 @@ public class Inventory : MonoBehaviour
 
     }
 
-    // Start is called before the first frame update
+    public void Almacenar(int id)
+    {
+        if (Equipo[id].GetComponent<Image>().enabled == false)
+        {
+            Equipo[id].GetComponent<Image>().sprite = Bag[ID].GetComponent<Image>().sprite;
+            Equipo[id].GetComponent<Image>().enabled = true;
+            Bag[ID].GetComponent<Image>().sprite = null;
+            Bag[ID].GetComponent<Image>().enabled = false;
+        }
+        else
+        {
+            Sprite obj = Bag[ID].GetComponent<Image>().sprite;
+            Debug.Log(Bag[ID].GetComponent<Image>().sprite.name);
+            Bag[ID].GetComponent<Image>().sprite = Equipo[id].GetComponent<Image>().sprite;
+            Equipo[id].GetComponent<Image>().sprite = obj;
+        }
+    }
+
     void Start()
     {
         
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (Activar_inv)
