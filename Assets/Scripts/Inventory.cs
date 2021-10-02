@@ -1,5 +1,7 @@
+using Proyecto26;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -21,6 +23,17 @@ public class Inventory : MonoBehaviour
     public Sprite[] Seleccion_Sprite;
     public int ID_select;
 
+    bool cansave;
+    public GameObject message;
+
+    public TMP_Text Ataque;
+    public TMP_Text Defensa;
+    public TMP_Text Suerte;
+
+    public TMP_Text name;
+
+    public List<GameObject> objGame = new List<GameObject>();
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
       // if (collision.CompareTag("Item"))
@@ -32,6 +45,7 @@ public class Inventory : MonoBehaviour
                 {
                     Bag[i].GetComponent<Image>().enabled = true;
                     Bag[i].GetComponent<Image>().sprite = collision.GetComponent<SpriteRenderer>().sprite;
+                    Bag[i].GetComponent<Item>().Sprite = collision.GetComponent<SpriteRenderer>().sprite.name;
                     Bag[i].GetComponent<Item>().Type = collision.GetComponent<Item>().Type;
                     Bag[i].GetComponent<Item>().Atack = collision.GetComponent<Item>().Atack;
                     Bag[i].GetComponent<Item>().Defense = collision.GetComponent<Item>().Defense;
@@ -41,6 +55,60 @@ public class Inventory : MonoBehaviour
                 }
             }
             Destroy(collision.gameObject);
+        }
+
+        if (collision.gameObject.tag == "Save")
+        {
+            cansave = true;
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.gameObject.tag == "Save")
+        {
+            cansave = false;
+        }
+    }
+
+    private void Save()
+    {
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            var user = Login.user;
+            var positionX = PlayerController.x;
+            var positionY = PlayerController.y;
+
+            List<string> items = new List<string>();
+            List<string> itemsPlayer = new List<string>();
+
+            for (int i = 0; i < Equipo.Count; i++)
+            {
+                itemsPlayer.Add($"{{\"Sprite\":\"{Equipo[i].GetComponent<Item>().Sprite}\",\"Type\":\"{Equipo[i].GetComponent<Item>().Type}\",\"Atack\":" +
+                $"\"{Equipo[i].GetComponent<Item>().Atack}\",\"Defense\":\"{Equipo[i].GetComponent<Item>().Defense}\",\"Lucky\":\"{Equipo[i].GetComponent<Item>().Lucky}\"}}");
+
+            }
+
+            for (int i = 0; i < Bag.Count; i++)
+            {
+                items.Add($"{{\"Sprite\":\"{Bag[i].GetComponent<Item>().Sprite}\",\"Type\":\"{Bag[i].GetComponent<Item>().Type}\",\"Atack\":" +
+                    $"\"{Bag[i].GetComponent<Item>().Atack}\",\"Defense\":\"{Bag[i].GetComponent<Item>().Defense}\",\"Lucky\":\"{Bag[i].GetComponent<Item>().Lucky}\"}}");
+
+            }
+
+            var itemsS = StringSerializationAPI.Serialize(typeof(List<string>), items);
+            var itemsE = StringSerializationAPI.Serialize(typeof(List<string>), itemsPlayer);
+
+            var payLoad = $"{{\"user\":\"{user}\",\"positionX\":\"{positionX}\",\"positionY\":" +
+                    $"\"{positionY}\",\"items\":{itemsS},\"Equipo\":{itemsE}}}";
+
+            RestClient.Post("http://127.0.0.1:5000/user", payLoad).Then(
+                response =>
+                {
+                    string S = response.Text;
+                    Debug.Log(S);
+                }).Catch(Debug.Log);
+
         }
     }
 
@@ -56,7 +124,7 @@ public class Inventory : MonoBehaviour
                 if (Input.GetKeyDown(KeyCode.RightArrow) && ID_equipo < Equipo.Count - 1) { ID_equipo++; }
                 Selector.transform.position = Equipo[ID_equipo].transform.position;
 
-                if (Input.GetKeyDown(KeyCode.Tab) && Activar_inv)
+                if (Input.GetKeyDown(KeyCode.UpArrow) && Activar_inv)
                 {
                     Fases_inv = 1;
                 }
@@ -78,7 +146,7 @@ public class Inventory : MonoBehaviour
                 if (Input.GetKeyDown(KeyCode.DownArrow) && ID < 6) { ID += 3; }
                 Selector.transform.position = Bag[ID].transform.position;
 
-                if (Input.GetKeyDown(KeyCode.Tab) && Activar_inv)
+                if (ID >= 7 && ID <= 9 && Input.GetKeyDown(KeyCode.DownArrow) && Activar_inv)
                 {
                     Fases_inv = 0;
                 }
@@ -127,20 +195,6 @@ public class Inventory : MonoBehaviour
                                     break;
 
                             }
-                            /*if (Equipo[ID_equipo].GetComponent<Image>().enabled == false)
-                            {
-                                Equipo[ID_equipo].GetComponent<Image>().sprite = Bag[ID].GetComponent<Image>().sprite;
-                                Equipo[ID_equipo].GetComponent<Image>().enabled = true;
-                                Bag[ID].GetComponent<Image>().sprite = null;
-                                Bag[ID].GetComponent<Image>().enabled = false;
-                            }
-                            else
-                            {
-                                Sprite obj = Bag[ID].GetComponent<Image>().sprite;
-                                Debug.Log(Bag[ID].GetComponent<Image>().sprite.name);
-                                Bag[ID].GetComponent<Image>().sprite = Equipo[ID_equipo].GetComponent<Image>().sprite;
-                                Equipo[ID_equipo].GetComponent<Image>().sprite = obj;
-                            }*/
                             Fases_inv = 0;
                         }
                         break;
@@ -180,26 +234,131 @@ public class Inventory : MonoBehaviour
         if (Equipo[id].GetComponent<Image>().enabled == false)
         {
             Equipo[id].GetComponent<Image>().sprite = Bag[ID].GetComponent<Image>().sprite;
+            Equipo[id].GetComponent<Item>().Sprite = Bag[ID].GetComponent<Image>().sprite.name;
             Equipo[id].GetComponent<Image>().enabled = true;
+            Equipo[id].GetComponent<Item>().Type = Bag[ID].GetComponent<Item>().Type;
+            Equipo[id].GetComponent<Item>().Atack = Bag[ID].GetComponent<Item>().Atack;
+            Equipo[id].GetComponent<Item>().Defense = Bag[ID].GetComponent<Item>().Defense;
+            Equipo[id].GetComponent<Item>().Lucky = Bag[ID].GetComponent<Item>().Lucky;
+
             Bag[ID].GetComponent<Image>().sprite = null;
+            Bag[ID].GetComponent<Item>().Sprite = null;
+            Bag[ID].GetComponent<Item>().Type = "";
+            Bag[ID].GetComponent<Item>().Atack = "0";
+            Bag[ID].GetComponent<Item>().Defense = "0";
+            Bag[ID].GetComponent<Item>().Lucky = "0";
             Bag[ID].GetComponent<Image>().enabled = false;
         }
         else
         {
             Sprite obj = Bag[ID].GetComponent<Image>().sprite;
-            Debug.Log(Bag[ID].GetComponent<Image>().sprite.name);
+            string objType = Bag[ID].GetComponent<Item>().Type;
+            string objsprite = Bag[ID].GetComponent<Item>().Sprite;
+            string objAtack = Bag[ID].GetComponent<Item>().Atack;
+            string objLucky = Bag[ID].GetComponent<Item>().Lucky;
+            string objDefense = Bag[ID].GetComponent<Item>().Defense;
+
             Bag[ID].GetComponent<Image>().sprite = Equipo[id].GetComponent<Image>().sprite;
+            Bag[ID].GetComponent<Item>().Type = Equipo[id].GetComponent<Item>().Type;
+            Bag[ID].GetComponent<Item>().Atack = Equipo[id].GetComponent<Item>().Atack;
+            Bag[ID].GetComponent<Item>().Defense = Equipo[id].GetComponent<Item>().Defense;
+            Bag[ID].GetComponent<Item>().Lucky = Equipo[id].GetComponent<Item>().Lucky;
+
             Equipo[id].GetComponent<Image>().sprite = obj;
+            Equipo[id].GetComponent<Item>().Sprite = objsprite;
+            Equipo[id].GetComponent<Item>().Type = objType;
+            Equipo[id].GetComponent<Item>().Atack = objAtack;
+            Equipo[id].GetComponent<Item>().Defense = objDefense;
+            Equipo[id].GetComponent<Item>().Lucky = objLucky;
+        }
+
+        switch (id)
+        {
+            case 0:
+                Ataque.text = Equipo[id].GetComponent<Item>().Atack.ToString();
+                break;
+            case 2:
+                Defensa.text = Equipo[id].GetComponent<Item>().Defense.ToString();
+                break;
+            case 4:
+                Suerte.text = Equipo[id].GetComponent<Item>().Lucky.ToString();
+                break;
+            default:
+                break;
         }
     }
 
     void Start()
     {
-        
+        //Debug.Log(Login.Bag.Count);
+        for (int i = 0; i < Login.spritess.Count ; i++)
+        {
+            Bag[i].GetComponent<Image>().sprite = Login.spritess[i];
+            if (Bag[i].GetComponent<Image>().sprite)
+            {
+                Bag[i].GetComponent<Item>().Sprite = Login.spritess[i].name;
+            }
+            else
+            {
+                Bag[i].GetComponent<Item>().Sprite = "";
+            }
+            Bag[i].GetComponent<Item>().Type = Login.types[i];
+            Bag[i].GetComponent<Item>().Atack = Login.atacks[i];
+            Bag[i].GetComponent<Item>().Defense = Login.defenses[i];
+            Bag[i].GetComponent<Item>().Lucky = Login.luckys[i];
+            Bag[i].GetComponent<Image>().enabled = Login.enables[i];
+        }
+
+        for (int i = 0; i < Login.Espritess.Count; i++)
+        {
+            Equipo[i].GetComponent<Image>().sprite = Login.Espritess[i];
+            if (Equipo[i].GetComponent<Image>().sprite)
+            {
+                Equipo[i].GetComponent<Item>().Sprite = Login.Espritess[i].name;
+            }
+            else
+            {
+                Equipo[i].GetComponent<Item>().Sprite = "";
+            }
+            Equipo[i].GetComponent<Item>().Type = Login.Etypes[i];
+            Equipo[i].GetComponent<Item>().Atack = Login.Eatacks[i];
+            Equipo[i].GetComponent<Item>().Defense = Login.Edefenses[i];
+            Equipo[i].GetComponent<Item>().Lucky = Login.Eluckys[i];
+            Equipo[i].GetComponent<Image>().enabled = Login.Eenables[i];
+        }
+
+        for (int i = 0; i < objGame.Count; i++)
+        {
+            for (int j = 0; j < Bag.Count; j++)
+            {
+                if (objGame[i].GetComponent<SpriteRenderer>().sprite == Bag[j].GetComponent<Image>().sprite)
+                {
+                    Destroy(objGame[i]);
+                }
+            }
+            for (int j = 0; j < Equipo.Count; j++)
+            {
+                if (objGame[i].GetComponent<SpriteRenderer>().sprite == Equipo[j].GetComponent<Image>().sprite)
+                {
+                    Destroy(objGame[i]);
+                }
+            }
+        }
+        name.text = Login.user;
+        cansave = false;
     }
 
     void Update()
     {
+
+        if (cansave)
+        {
+            message.SetActive(true);
+            Save();
+        }else
+        {
+            message.SetActive(false);
+        }
         if (Activar_inv)
         {
         Navegar();

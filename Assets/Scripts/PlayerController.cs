@@ -5,18 +5,24 @@ public class PlayerController : MonoBehaviour
 {
     public static float xin;
     public static float yin;
+    public static float x;
+    public static float y;
 
     // Start is called before the first frame update
     void Start()
     {
+        gameObject.transform.position = new Vector3(x, y, 0);
+
         xin = gameObject.transform.position.x;
         yin = gameObject.transform.position.y;
+
     }
 
     // Update is called once per frame
     void Update()
     {
-
+        x = gameObject.transform.position.x;
+        y = gameObject.transform.position.y;
         if (Input.GetKey("left") && Time.timeScale == 1)
        {
             gameObject.GetComponent<Animator>().Play("Left");

@@ -4,10 +4,11 @@ using UnityEngine;
 
 public class Item : MonoBehaviour
 {
+    public string Sprite;
     public string Type;
-    public int Atack;
-    public int Defense;
-    public int Lucky;
+    public string Atack;
+    public string Defense;
+    public string Lucky;
 
     void Start()
     {
